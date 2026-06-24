@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stop&Go Mobile</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="stylesm.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <button class="back-button" id="backButton" type="button" aria-label="Retour">
+          <span aria-hidden="true">‹</span>
+        </button>
+        <div class="brand">
+          <strong>STOP<span>&amp;GO</span></strong>
+          <small>Dakar</small>
+        </div>
+        <select id="languageSelect" aria-label="Langue">
+          <option value="fr">FR</option>
+          <option value="wo">WO</option>
+          <option value="en">EN</option>
+        </select>
+      </header>
+
+      <main class="content">
+        <section class="view active" id="homeView">
+          <p class="greeting" data-i18n="hello">Bonjour, Moussa</p>
+
+          <div class="balance-card">
+            <div>
+              <span data-i18n="balanceLabel">Solde actuel</span>
+              <strong id="balanceAmount">2 450 FCFA</strong>
+            </div>
+            <div class="balance-actions">
+              <button id="toggleBalance" class="eye-btn" type="button" aria-label="Masquer le solde">
+                👁
+              </button>
+              <button class="add-btn" id="topupShortcut" type="button" aria-label="Recharger">
+                +
+              </button>
+            </div>
+          </div>
+
+          <div class="main-actions">
+            <button class="btn btn-primary" type="button" data-go="ticketView">
+              <span aria-hidden="true">🎫</span>
+              <span data-i18n="buyTicket">Acheter un ticket</span>
+            </button>
+            <button class="btn btn-secondary" type="button" data-go="subscriptionView">
+              <span aria-hidden="true">🧾</span>
+              <span data-i18n="subscription">Mon abonnement</span>
+            </button>
+          </div>
+
+          <article class="card quick-ticket">
+            <div class="card-title">
+              <div>
+                <h2 data-i18n="quickTicket">Ticket rapide</h2>
+                <p data-i18n="favoriteLine">Votre ligne favorite</p>
+              </div>
+            </div>
+            <div class="split-row">
+              <div>
+                <span id="quickRoute">Liberté 6 → Plateau</span>
+                <strong id="quickPrice">200 FCFA</strong>
+              </div>
+              <button class="small-button" type="button" data-go="ticketView" data-i18n="buy">Acheter</button>
+            </div>
+          </article>
+
+          <article class="card route-card">
+            <div>
+              <p data-i18n="nextLine">Prochaine ligne</p>
+              <strong id="nextRoute">Liberté 6 → Plateau</strong>
+            </div>
+            <button class="small-button" type="button" data-go="stopsView" data-i18n="stops">Arrêts</button>
+          </article>
+        </section>
+
+        <section class="view" id="ticketView">
+          <h1 data-i18n="buyTicket">Acheter un ticket</h1>
+          <label class="field">
+            <span data-i18n="chooseRoute">Choisir une ligne AFTU</span>
+            <select id="routeSelect"></select>
+          </label>
+
+          <div class="route-details" id="routeDetails"></div>
+
+          <div class="choice-group" id="ticketChoices">
+            <button class="choice active" type="button" data-kind="single">
+              <span data-i18n="singleTicket">Ticket unitaire</span>
+              <strong id="singleFareLabel">200 FCFA</strong>
+            </button>
+            <button class="choice" type="button" data-kind="day">
+              <span data-i18n="dayTicket">Ticket journée</span>
+              <strong id="dayFareLabel">800 FCFA</strong>
+            </button>
+          </div>
+
+          <div class="notice">
+            <span data-i18n="walletDebit">Débit du solde STOP&GO</span>
+            <strong id="ticketBalancePreview">2 450 FCFA disponibles</strong>
+          </div>
+
+          <button class="btn btn-primary sticky-action" id="payTicketButton" type="button">Payer 200 FCFA</button>
+        </section>
+
+        <section class="view success-view" id="successView">
+          <div class="success-icon" aria-hidden="true">✓</div>
+          <h1 data-i18n="paymentSuccess">Paiement réussi</h1>
+          <p data-i18n="paymentSuccessText">Votre ticket a été acheté avec succès.</p>
+
+          <dl class="receipt">
+            <div><dt data-i18n="line">Ligne</dt><dd id="receiptRoute">Liberté 6 → Plateau</dd></div>
+            <div><dt data-i18n="date">Date</dt><dd id="receiptDate">18 Juin 2026</dd></div>
+            <div><dt data-i18n="amount">Montant</dt><dd id="receiptPrice">200 FCFA</dd></div>
+          </dl>
+
+          <button class="btn btn-primary" type="button" data-go="qrView" data-i18n="viewTicket">Voir mon ticket</button>
+          <button class="btn btn-secondary" type="button" data-go="homeView" data-i18n="close">Fermer</button>
+        </section>
+
+        <section class="view" id="qrView">
+          <h1 data-i18n="myTicket">Mon ticket</h1>
+          <article class="ticket-card">
+            <div class="fake-qr" aria-label="QR code du ticket"></div>
+            <strong data-i18n="activeTicket">Ticket actif</strong>
+            <dl>
+              <div><dt data-i18n="line">Ligne</dt><dd id="qrRoute">Liberté 6 → Plateau</dd></div>
+              <div><dt data-i18n="ticket">Ticket</dt><dd id="qrTicket">Ticket unitaire</dd></div>
+              <div><dt data-i18n="code">Code</dt><dd id="qrCode">XG8D-7K2Q</dd></div>
+            </dl>
+          </article>
+          <button class="btn btn-primary" id="presentTicketButton" type="button" data-i18n="presentTicket">Présenter au contrôleur</button>
+        </section>
+
+        <section class="view" id="subscriptionView">
+          <h1 data-i18n="monthlyPass">Abonnement mensuel</h1>
+          <article class="subscription-card">
+            <span data-i18n="monthlyBusPass">Abonnement bus mensuel</span>
+            <strong id="subscriptionFareLabel">15 000 FCFA</strong>
+            <p id="subscriptionZoneText">Voyages illimités pendant 30 jours.</p>
+          </article>
+          <div class="notice">
+            <span data-i18n="walletDebit">Débit du solde STOP&GO</span>
+            <strong id="subscriptionBalancePreview">2 450 FCFA disponibles</strong>
+          </div>
+          <button class="btn btn-primary sticky-action" id="paySubscriptionButton" type="button">Payer 15 000 FCFA</button>
+        </section>
+
+        <section class="view success-view" id="subscriptionActiveView">
+          <div class="success-icon" aria-hidden="true">✓</div>
+          <h1 data-i18n="passActive">Abonnement actif</h1>
+          <p data-i18n="passActiveText">Vous pouvez voyager en illimité.</p>
+          <dl class="receipt">
+            <div><dt data-i18n="start">Début</dt><dd id="subscriptionStart">18 Juin 2026</dd></div>
+            <div><dt data-i18n="end">Fin</dt><dd id="subscriptionEnd">18 Juillet 2026</dd></div>
+            <div><dt data-i18n="status">Statut</dt><dd data-i18n="active">Actif</dd></div>
+          </dl>
+          <button class="btn btn-primary" type="button" data-go="homeView" data-i18n="backHome">Retour à l'accueil</button>
+        </section>
+
+        <section class="view" id="topupView">
+          <h1 data-i18n="topupTitle">Recharger le solde</h1>
+          <article class="card">
+            <p data-i18n="savedAccount">Compte enregistré</p>
+            <strong id="savedPaymentSummary">Wave - +221 77 123 45 67</strong>
+          </article>
+          <label class="field">
+            <span data-i18n="topupAmount">Montant à recharger</span>
+            <input id="topupAmount" type="number" min="100" step="100" value="1000" />
+          </label>
+          <div class="choice-group" id="topupPaymentGroup">
+            <button class="payment active" type="button" data-wallet="Wave"><b>W</b><span>Wave - +221 77 123 45 67</span></button>
+            <button class="payment" type="button" data-wallet="Orange Money"><b>OM</b><span>Orange Money - +221 77 765 43 21</span></button>
+          </div>
+          <button class="btn btn-primary sticky-action" id="confirmTopupButton" type="button">Continuer vers Wave</button>
+        </section>
+
+        <section class="view" id="stopsView">
+          <h1 data-i18n="nearStops">Arrêts proches</h1>
+          <label class="search-field">
+            <span aria-hidden="true">⌕</span>
+            <input id="stopSearch" type="search" value="Liberté 6" aria-label="Rechercher un arrêt" />
+          </label>
+          <div id="map" aria-label="Carte des arrêts proches"></div>
+          <div class="stop-list" id="stopList"></div>
+        </section>
+
+        <section class="view" id="historyView">
+          <h1 data-i18n="trips">Trajets</h1>
+          <div class="history-list" id="historyList">
+            <article><strong>Liberté 6 → Plateau</strong><span>08:32</span><b>200 FCFA</b></article>
+            <article><strong>Colobane → Médina</strong><span>07:45</span><b>200 FCFA</b></article>
+            <article><strong>Mermoz → Castors</strong><span>Hier</span><b>200 FCFA</b></article>
+          </div>
+        </section>
+
+        <section class="view" id="profileView">
+          <h1 data-i18n="profile">Profil</h1>
+          <article class="profile-hero">
+            <div class="avatar" aria-hidden="true">MD</div>
+            <div>
+              <strong>Moussa Diop</strong>
+              <span data-i18n="verifiedClient">Client AFTU vérifié</span>
+              <small>+221 77 123 45 67</small>
+            </div>
+          </article>
+
+          <div class="profile-stats">
+            <article><span data-i18n="balanceLabel">Solde actuel</span><strong id="profileBalance">2 450 FCFA</strong></article>
+            <article><span data-i18n="subscription">Abonnement</span><strong id="profilePassStatus">Non actif</strong></article>
+          </div>
+
+          <div class="profile-actions">
+            <button class="btn btn-primary" type="button" data-go="topupView" data-i18n="topup">Recharger</button>
+            <button class="btn btn-secondary" type="button" data-go="subscriptionView" data-i18n="managePass">Gérer l'abonnement</button>
+          </div>
+
+          <article class="info-card">
+            <h2 data-i18n="personalInfo">Informations personnelles</h2>
+            <dl>
+              <div><dt data-i18n="phone">Téléphone</dt><dd>+221 77 123 45 67</dd></div>
+              <div><dt data-i18n="address">Adresse</dt><dd>Liberté 6, Dakar</dd></div>
+              <div><dt data-i18n="identifier">Identifiant</dt><dd>AFTU-MD-2406</dd></div>
+            </dl>
+          </article>
+        </section>
+      </main>
+
+      <nav class="tabbar" aria-label="Navigation principale">
+        <button class="active" type="button" data-go="homeView">
+          <span aria-hidden="true">🏠</span>
+          <small data-i18n="home">Accueil</small>
+        </button>
+        <button type="button" data-go="qrView">
+          <span aria-hidden="true">🎫</span>
+          <small data-i18n="tickets">Tickets</small>
+        </button>
+        <button id="voiceButton" type="button">
+          <span aria-hidden="true">🎤</span>
+          <small data-i18n="micro">Micro</small>
+        </button>
+        <button type="button" data-go="historyView">
+          <span aria-hidden="true">📍</span>
+          <small data-i18n="trips">Trajets</small>
+        </button>
+        <button type="button" data-go="profileView">
+          <span aria-hidden="true">👤</span>
+          <small data-i18n="profile">Profil</small>
+        </button>
+      </nav>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

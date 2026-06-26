@@ -6,6 +6,7 @@
     <title>Stop&Go Mobile</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="stylesm.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
     <div class="app">
@@ -17,11 +18,15 @@
           <strong>STOP<span>&amp;GO</span></strong>
           <small>Dakar</small>
         </div>
-        <select id="languageSelect" aria-label="Langue">
-          <option value="fr">FR</option>
-          <option value="wo">WO</option>
-          <option value="en">EN</option>
-        </select>
+        <div class="header-actions">
+
+          <select id="languageSelect" aria-label="Langue">
+            <option value="fr">FR</option>
+            <option value="wo">WO</option>
+            <option value="en">EN</option>
+          </select>
+
+        </div>
       </header>
 
       <main class="content">
@@ -34,22 +39,23 @@
               <strong id="balanceAmount">2 450 FCFA</strong>
             </div>
             <div class="balance-actions">
-              <button id="toggleBalance" class="eye-btn" type="button" aria-label="Masquer le solde">
-                👁
+              <button id="toggleBalance" class="eye-btn" type="button" aria-label="Masquer le solde" title="Masquer le solde">
+                <i id="balanceEye"
+                data-lucide="eye"></i>
               </button>
-              <button class="add-btn" id="topupShortcut" type="button" aria-label="Recharger">
-                +
+              <button class="add-btn" id="topupShortcut" type="button" aria-label="Recharger" title="Recharger le compte">
+                <i data-lucide="plus"></i>
               </button>
             </div>
           </div>
 
           <div class="main-actions">
             <button class="btn btn-primary" type="button" data-go="ticketView">
-              <span aria-hidden="true">🎫</span>
+              <span aria-hidden="true"><i data-lucide="ticket"></i></span>
               <span data-i18n="buyTicket">Acheter un ticket</span>
             </button>
             <button class="btn btn-secondary" type="button" data-go="subscriptionView">
-              <span aria-hidden="true">🧾</span>
+              <span aria-hidden="true"><i data-lucide="credit-card"></i></span>
               <span data-i18n="subscription">Mon abonnement</span>
             </button>
           </div>
@@ -83,7 +89,11 @@
           <h1 data-i18n="buyTicket">Acheter un ticket</h1>
           <label class="field">
             <span data-i18n="chooseRoute">Choisir une ligne AFTU</span>
-            <select id="routeSelect"></select>
+            <select
+              id="routeSelect"
+              name="route"
+              aria-label="Choisir une ligne AFTU">
+          </select>
           </label>
 
           <div class="route-details" id="routeDetails"></div>
@@ -104,11 +114,19 @@
             <strong id="ticketBalancePreview">2 450 FCFA disponibles</strong>
           </div>
 
-          <button class="btn btn-primary sticky-action" id="payTicketButton" type="button">Payer 200 FCFA</button>
+          <button
+              class="btn btn-primary sticky-action"
+              id="payTicketButton"
+              type="button"
+              data-action="pay-ticket">
+              Payer 200 FCFA
+          </button>
         </section>
 
         <section class="view success-view" id="successView">
-          <div class="success-icon" aria-hidden="true">✓</div>
+          <div class="success-icon" aria-hidden="true">
+              <i data-lucide="badge-check"></i>
+          </div>
           <h1 data-i18n="paymentSuccess">Paiement réussi</h1>
           <p data-i18n="paymentSuccessText">Votre ticket a été acheté avec succès.</p>
 
@@ -125,7 +143,11 @@
         <section class="view" id="qrView">
           <h1 data-i18n="myTicket">Mon ticket</h1>
           <article class="ticket-card">
-            <div class="fake-qr" aria-label="QR code du ticket"></div>
+            <div
+                id="qrContainer"
+                class="qr-container"
+                aria-label="QR Code du ticket">
+            </div>
             <strong data-i18n="activeTicket">Ticket actif</strong>
             <dl>
               <div><dt data-i18n="line">Ligne</dt><dd id="qrRoute">Liberté 6 → Plateau</dd></div>
@@ -133,7 +155,12 @@
               <div><dt data-i18n="code">Code</dt><dd id="qrCode">XG8D-7K2Q</dd></div>
             </dl>
           </article>
-          <button class="btn btn-primary" id="presentTicketButton" type="button" data-i18n="presentTicket">Présenter au contrôleur</button>
+          <button
+            class="btn btn-primary"
+            id="presentTicketButton"
+            type="button"
+            data-action="present-ticket"
+            data-i18n="presentTicket">Présenter au contrôleur</button>
         </section>
 
         <section class="view" id="subscriptionView">
@@ -147,7 +174,13 @@
             <span data-i18n="walletDebit">Débit du solde STOP&GO</span>
             <strong id="subscriptionBalancePreview">2 450 FCFA disponibles</strong>
           </div>
-          <button class="btn btn-primary sticky-action" id="paySubscriptionButton" type="button">Payer 15 000 FCFA</button>
+          <button
+              class="btn btn-primary sticky-action"
+              id="paySubscriptionButton"
+              type="button"
+              data-action="pay-subscription">
+              Payer 15 000 FCFA
+          </button>
         </section>
 
         <section class="view success-view" id="subscriptionActiveView">
@@ -170,13 +203,28 @@
           </article>
           <label class="field">
             <span data-i18n="topupAmount">Montant à recharger</span>
-            <input id="topupAmount" type="number" min="100" step="100" value="1000" />
+            <input
+              id="topupAmount"
+              name="topupAmount"
+              type="number"
+              min="100"
+              max="100000"
+              step="100"
+              inputmode="numeric"
+              autocomplete="off"
+              value="1000" />
           </label>
           <div class="choice-group" id="topupPaymentGroup">
             <button class="payment active" type="button" data-wallet="Wave"><b>W</b><span>Wave - +221 77 123 45 67</span></button>
             <button class="payment" type="button" data-wallet="Orange Money"><b>OM</b><span>Orange Money - +221 77 765 43 21</span></button>
           </div>
-          <button class="btn btn-primary sticky-action" id="confirmTopupButton" type="button">Continuer vers Wave</button>
+          <button
+              class="btn btn-primary sticky-action"
+              id="confirmTopupButton"
+              type="button"
+              data-action="confirm-topup">
+              Continuer vers Wave
+          </button>
         </section>
 
         <section class="view" id="stopsView">
@@ -191,7 +239,7 @@
 
         <section class="view" id="historyView">
           <h1 data-i18n="trips">Trajets</h1>
-          <div class="history-list" id="historyList">
+          <div class="history-list" id="historyList" aria-live="polite">
             <article><strong>Liberté 6 → Plateau</strong><span>08:32</span><b>200 FCFA</b></article>
             <article><strong>Colobane → Médina</strong><span>07:45</span><b>200 FCFA</b></article>
             <article><strong>Mermoz → Castors</strong><span>Hier</span><b>200 FCFA</b></article>
@@ -201,7 +249,11 @@
         <section class="view" id="profileView">
           <h1 data-i18n="profile">Profil</h1>
           <article class="profile-hero">
-            <div class="avatar" aria-hidden="true">MD</div>
+            <div
+                class="avatar"
+                aria-label="Avatar utilisateur">
+                MD
+            </div>
             <div>
               <strong>Moussa Diop</strong>
               <span data-i18n="verifiedClient">Client AFTU vérifié</span>
@@ -215,8 +267,22 @@
           </div>
 
           <div class="profile-actions">
-            <button class="btn btn-primary" type="button" data-go="topupView" data-i18n="topup">Recharger</button>
-            <button class="btn btn-secondary" type="button" data-go="subscriptionView" data-i18n="managePass">Gérer l'abonnement</button>
+            <button
+                class="btn btn-primary"
+                type="button"
+                data-go="topupView"
+                data-action="topup"
+                data-i18n="topup">
+                Recharger
+            </button>
+            <button
+                class="btn btn-secondary"
+                type="button"
+                data-go="subscriptionView"
+                data-action="subscription"
+                data-i18n="managePass">
+                Gérer l'abonnement
+            </button>
           </div>
 
           <article class="info-card">
@@ -231,30 +297,48 @@
       </main>
 
       <nav class="tabbar" aria-label="Navigation principale">
+
         <button class="active" type="button" data-go="homeView">
-          <span aria-hidden="true">🏠</span>
+          <span aria-hidden="true">
+            <i data-lucide="house"></i>
+          </span>
           <small data-i18n="home">Accueil</small>
         </button>
+
         <button type="button" data-go="qrView">
-          <span aria-hidden="true">🎫</span>
+          <span aria-hidden="true">
+            <i data-lucide="qr-code"></i>
+          </span>
           <small data-i18n="tickets">Tickets</small>
         </button>
-        <button id="voiceButton" type="button">
-          <span aria-hidden="true">🎤</span>
-          <small data-i18n="micro">Micro</small>
+
+        <button
+          id="voiceButton"
+          class="voice-nav"
+          type="button"
+          aria-label="Commande vocale">
+          <i data-lucide="mic"></i>
         </button>
+
         <button type="button" data-go="historyView">
-          <span aria-hidden="true">📍</span>
-          <small data-i18n="trips">Trajets</small>
+          <span aria-hidden="true">
+            <i data-lucide="history"></i>
+          </span>
+          <small data-i18n="trips">Historique</small>
         </button>
+
         <button type="button" data-go="profileView">
-          <span aria-hidden="true">👤</span>
+          <span aria-hidden="true">
+            <i data-lucide="user-round"></i>
+          </span>
           <small data-i18n="profile">Profil</small>
         </button>
+
       </nav>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

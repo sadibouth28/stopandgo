@@ -324,12 +324,22 @@ function balanceText(suffix = "") {
 }
 
 function updateBalanceVisibility() {
+
   const hidden = state.balanceHidden;
-  elements.toggleBalanceButton.textContent = hidden ? "🙈" : "👁";
+
+  elements.toggleBalanceButton.innerHTML = hidden
+    ? '<i id="balanceEye" data-lucide="eye-off"></i>'
+    : '<i id="balanceEye" data-lucide="eye"></i>';
+
   elements.toggleBalanceButton.setAttribute(
     "aria-label",
     hidden ? "Afficher le solde" : "Masquer le solde"
   );
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
 }
 
 function todayLabel() {
@@ -387,6 +397,9 @@ function showView(viewId, track = true) {
       if (map) map.invalidateSize();
     }, 80);
   }
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function goBack() {
@@ -430,9 +443,9 @@ function updateUi() {
   elements.profileBalance.textContent = balanceText();
   elements.profilePassStatus.textContent = state.passActive ? t("active") : t("passInactive");
 
-  $("#quickRoute").textContent = route.name;
-  $("#nextRoute").textContent = route.name;
-  $("#quickPrice").textContent = formatPrice(zone.single);
+  $("#quickRoute") && ($("#quickRoute").textContent = route.name);
+$("#nextRoute") && ($("#nextRoute").textContent = route.name);
+$("#quickPrice") && ($("#quickPrice").textContent = formatPrice(zone.single));
 
   elements.singleFareLabel.textContent = formatPrice(zone.single);
   elements.dayFareLabel.textContent = formatPrice(zone.day);
@@ -457,9 +470,12 @@ function updateUi() {
 
   elements.savedPaymentSummary.textContent = savedWalletLabel(state.topupWallet);
   elements.confirmTopupButton.textContent = `${t("continueTo")} ${state.topupWallet} - ${formatPrice(Number(elements.topupAmount.value || 0))}`;
-  $("#subscriptionStart").textContent = todayLabel();
-  $("#subscriptionEnd").textContent = addDaysLabel(30);
+  $("#subscriptionStart") && ($("#subscriptionStart").textContent = todayLabel());
+  $("#subscriptionEnd") && ($("#subscriptionEnd").textContent = addDaysLabel(30));
   updateBalanceVisibility();
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
 function savedWalletLabel(wallet) {
@@ -469,10 +485,19 @@ function savedWalletLabel(wallet) {
 }
 
 function canDebit(amount) {
-  if (state.balance >= amount) return true;
+
+  if (state.balance >= amount) {
+    return true;
+  }
+
   alert(t("insufficientBalance"));
-  showView("topupView");
+
+  if (state.currentView !== "topupView") {
+    showView("topupView");
+  }
+
   return false;
+
 }
 
 function addHistoryEntry(label, amount) {
@@ -480,15 +505,80 @@ function addHistoryEntry(label, amount) {
   article.innerHTML = `<strong>${label}</strong><span>${t("now")}</span><b>${formatPrice(amount)}</b>`;
   elements.historyList.prepend(article);
 }
+function generateQRCode() {
 
+    const container = document.getElementById("qrContainer");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const canvas = document.createElement("canvas");
+
+    container.appendChild(canvas);
+
+    const data = JSON.stringify({
+
+        app: "STOP&GO",
+
+        route: selectedRoute().name,
+
+        ticket: ticketLabel(),
+
+        amount: ticketPrice(),
+
+        code: elements.qrCode.textContent,
+
+        date: new Date().toISOString()
+
+    });
+
+    QRCode.toCanvas(
+        canvas,
+        data,
+        {
+            width:180,
+            margin:2,
+            color:{
+                dark:"#111827",
+                light:"#FFFFFF"
+            }
+        },
+        function(error){
+
+            if(error){
+
+                console.error(error);
+
+            }
+
+        }
+
+    );
+
+}
 function buyTicket() {
-  const price = ticketPrice();
-  if (!canDebit(price)) return;
-  state.balance -= price;
-  addHistoryEntry(selectedRoute().name, price);
-  elements.qrCode.textContent = `SG-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-  updateUi();
-  showView("successView");
+
+    const price = ticketPrice();
+
+    if (!canDebit(price)) return;
+
+    state.balance -= price;
+
+    addHistoryEntry(selectedRoute().name, price);
+
+    const code =
+        "SG-" +
+        Date.now().toString(36).toUpperCase();
+
+    elements.qrCode.textContent = code;
+
+    updateUi();
+
+    generateQRCode();
+
+    showView("successView");
+
 }
 
 function buySubscription() {
@@ -649,7 +739,27 @@ function runCommand(command) {
       return;
     }
   }
+const destination = routes.find(route => {
 
+    const routeName = normalize(route.name);
+
+    return routeName.includes(text);
+
+});
+
+if(destination){
+
+    state.routeCode = destination.code;
+
+    elements.routeSelect.value = destination.code;
+
+    showView("ticketView");
+
+    updateUi();
+
+    return;
+
+}
   if (amount && text.includes("recharg")) {
     elements.topupAmount.value = amount;
     updateUi();
@@ -678,46 +788,113 @@ function runCommand(command) {
   else if (text.includes("trajet") || text.includes("historique")) showView("historyView");
   else if (text.includes("arret") || text.includes("stop")) showView("stopsView");
   else if (text.includes("recharg")) showView("topupView");
+  else if (
+    text.includes("solde") ||
+    text.includes("balance")
+){
+    alert(
+        "Votre solde est de " +
+        state.balance.toLocaleString("fr-FR") +
+        " FCFA"
+    );
+  }
+  else if (
+    text.includes("accueil") ||
+    text.includes("home")
+){
+    showView("homeView");
+}
   else showView("homeView");
 }
 
 function startVoiceRecognition() {
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Recognition) {
-    alert(t("unsupportedVoice"));
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Votre navigateur ne prend pas en charge la reconnaissance vocale.");
     return;
   }
 
-  const recognition = new Recognition();
+  const recognition = new SpeechRecognition();
+
   recognition.lang = state.lang === "en" ? "en-US" : "fr-FR";
   recognition.interimResults = false;
+  recognition.continuous = false;
   recognition.maxAlternatives = 1;
 
   elements.voiceButton.classList.add("listening");
-  recognition.onresult = (event) => runCommand(event.results[0][0].transcript);
-  recognition.onerror = () => alert(t("voiceError"));
-  recognition.onend = () => elements.voiceButton.classList.remove("listening");
+
   recognition.start();
+
+  recognition.onstart = () => {
+    console.log("Micro activé");
+  };
+
+  recognition.onresult = (event) => {
+
+    const transcript = event.results[0][0].transcript.trim();
+
+    console.log("Commande :", transcript);
+
+    runCommand(transcript);
+
+  };
+
+  recognition.onerror = (event) => {
+
+    console.error(event.error);
+
+    switch(event.error){
+
+      case "not-allowed":
+        alert("Autorisez l'accès au microphone.");
+        break;
+
+      case "no-speech":
+        alert("Aucune parole détectée.");
+        break;
+
+      case "audio-capture":
+        alert("Aucun microphone détecté.");
+        break;
+
+      default:
+        alert("Erreur de reconnaissance vocale.");
+        break;
+
+    }
+
+  };
+
+  recognition.onend = () => {
+
+    elements.voiceButton.classList.remove("listening");
+
+  };
+
 }
 
 $$("[data-go]").forEach((button) => {
   button.addEventListener("click", () => showView(button.dataset.go));
 });
 
-elements.backButton.addEventListener("click", goBack);
-elements.routeSelect.addEventListener("change", syncSelectedRoute);
-elements.payTicketButton.addEventListener("click", buyTicket);
-elements.paySubscriptionButton.addEventListener("click", buySubscription);
-elements.confirmTopupButton.addEventListener("click", confirmTopup);
-elements.topupAmount.addEventListener("input", updateUi);
-elements.stopSearch.addEventListener("input", () => renderStops(elements.stopSearch.value));
-elements.voiceButton.addEventListener("click", startVoiceRecognition);
-elements.presentTicketButton.addEventListener("click", () => alert(t("ticketReady")));
-$("#topupShortcut").addEventListener("click", () => showView("topupView"));
-elements.toggleBalanceButton.addEventListener("click", () => {
-  state.balanceHidden = !state.balanceHidden;
-  localStorage.setItem("balanceHidden", String(state.balanceHidden));
-  updateUi();
+elements.backButton?.addEventListener("click", goBack);
+elements.routeSelect?.addEventListener("change", syncSelectedRoute);
+elements.payTicketButton?.addEventListener("click", buyTicket);
+elements.paySubscriptionButton?.addEventListener("click", buySubscription);
+elements.confirmTopupButton?.addEventListener("click", confirmTopup);
+elements.topupAmount?.addEventListener("input", updateUi);
+elements.stopSearch?.addEventListener("input", () => renderStops(elements.stopSearch.value));
+elements.voiceButton?.addEventListener("click", startVoiceRecognition);
+elements.presentTicketButton?.addEventListener("click", () => alert(t("ticketReady")));
+$("#topupShortcut")?.addEventListener("click", () => showView("topupView"));
+elements.toggleBalanceButton?.addEventListener("click", () => {
+    state.balanceHidden = !state.balanceHidden;
+    localStorage.setItem("balanceHidden", String(state.balanceHidden));
+    updateUi();
 });
 
 elements.ticketChoices.forEach((button) => {
@@ -737,13 +914,17 @@ elements.topupPaymentButtons.forEach((button) => {
   });
 });
 
-elements.languageSelect.addEventListener("change", (event) => {
+elements.languageSelect?.addEventListener("change", (event) => {
   state.lang = event.target.value;
   document.documentElement.lang = state.lang;
   updateUi();
   renderStops(elements.stopSearch.value);
 });
-
+console.log("QRCode =", typeof QRCode);
+console.log("qrContainer =", document.getElementById("qrContainer"));
 populateRoutes();
 updateUi();
 renderStops(elements.stopSearch.value);
+if (window.lucide) {
+    lucide.createIcons();
+}
